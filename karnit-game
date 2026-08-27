@@ -1,0 +1,2409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卡尼特人生模拟器 · 源核运转协议 v3.1</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&display=swap');
+
+        :root {
+            --parchment: #f5f0e1;
+            --parchment-dark: #e8dcc8;
+            --ink: #2c2416;
+            --ink-light: #5c4d3a;
+            --accent-gold: #b8860b;
+            --accent-bronze: #8b6914;
+            --accent-crimson: #8b0000;
+            --accent-void: #1a0f2e;
+            --border: #c4b49a;
+            --shadow: rgba(44, 36, 22, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background: linear-gradient(135deg, #1a1510 0%, #2c2416 50%, #1a1510 100%);
+            color: var(--ink);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .parchment {
+            background: linear-gradient(180deg, var(--parchment) 0%, var(--parchment-dark) 100%);
+            border: 3px solid var(--border);
+            border-radius: 4px;
+            box-shadow: 0 0 20px var(--shadow), inset 0 0 60px rgba(139, 105, 20, 0.05);
+            position: relative;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .parchment::before {
+            content: '';
+            position: absolute;
+            top: 8px; left: 8px; right: 8px; bottom: 8px;
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .title-block {
+            text-align: center;
+            border-bottom: 2px solid var(--accent-gold);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .title-block h1 {
+            font-size: 1.8em;
+            font-weight: 900;
+            color: var(--ink);
+            letter-spacing: 4px;
+        }
+
+        .title-block .subtitle {
+            font-size: 0.85em;
+            color: var(--ink-light);
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .cert-num {
+            position: absolute;
+            top: -10px;
+            right: 0;
+            font-size: 0.7em;
+            color: var(--accent-crimson);
+            font-family: monospace;
+            background: rgba(139, 0, 0, 0.05);
+            padding: 2px 8px;
+            border: 1px solid var(--accent-crimson);
+            border-radius: 3px;
+        }
+
+        .divider {
+            border: none;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-bronze), transparent);
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .divider::after {
+            content: '◆';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--accent-bronze);
+            background: var(--parchment);
+            padding: 0 10px;
+            font-size: 0.8em;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(180deg, var(--accent-gold), var(--accent-bronze));
+            color: var(--parchment);
+            border: 2px solid var(--accent-bronze);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 1em;
+            font-weight: 600;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            filter: brightness(1.1);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(180deg, #6b5b4f, #4a3f35);
+            border-color: #4a3f35;
+        }
+
+        .btn-danger {
+            background: linear-gradient(180deg, #8b0000, #5c0000);
+            border-color: #5c0000;
+        }
+
+        .btn-void {
+            background: linear-gradient(180deg, #2d1f3d, var(--accent-void));
+            border-color: #4a3060;
+        }
+
+        .choice-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .choice-btn {
+            text-align: left;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, rgba(184, 134, 11, 0.08), rgba(139, 105, 20, 0.05));
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 0.95em;
+            color: var(--ink);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .choice-btn::before {
+            content: '▸';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-gold);
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .choice-btn:hover {
+            border-color: var(--accent-gold);
+            background: linear-gradient(135deg, rgba(184, 134, 11, 0.15), rgba(139, 105, 20, 0.1));
+            padding-left: 35px;
+        }
+
+        .choice-btn:hover::before { opacity: 1; }
+
+        .choice-btn .choice-title {
+            font-weight: 700;
+            display: block;
+            margin-bottom: 4px;
+            color: var(--ink);
+        }
+
+        .choice-btn .choice-desc {
+            font-size: 0.85em;
+            color: var(--ink-light);
+            display: block;
+        }
+
+        .narrative {
+            line-height: 2;
+            font-size: 1.05em;
+            text-align: justify;
+            color: var(--ink);
+            text-indent: 2em;
+        }
+
+        .narrative p { margin-bottom: 1em; }
+
+        .narrative .quote {
+            font-style: italic;
+            color: var(--ink-light);
+            border-left: 3px solid var(--accent-gold);
+            padding-left: 15px;
+            margin: 15px 0;
+            text-indent: 0;
+        }
+
+        .panel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .panel-section {
+            background: rgba(255,255,255,0.3);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 15px;
+        }
+
+        .panel-section.full-width { grid-column: 1 / -1; }
+
+        .panel-section h3 {
+            font-size: 0.9em;
+            color: var(--accent-bronze);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .panel-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 0.9em;
+            border-bottom: 1px dashed rgba(196, 180, 154, 0.3);
+        }
+
+        .panel-row:last-child { border-bottom: none; }
+
+        .panel-label { color: var(--ink-light); }
+        .panel-value { font-weight: 600; color: var(--ink); }
+        .panel-value.highlight { color: var(--accent-crimson); }
+        .panel-value.gold { color: var(--accent-gold); }
+
+        .stat-bar {
+            display: flex;
+            align-items: center;
+            margin: 6px 0;
+        }
+
+        .stat-name {
+            width: 60px;
+            font-size: 0.85em;
+            color: var(--ink-light);
+        }
+
+        .stat-track {
+            flex: 1;
+            height: 8px;
+            background: rgba(0,0,0,0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+
+        .stat-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .stat-fill.vig { background: linear-gradient(90deg, #8b0000, #cd5c5c); }
+        .stat-fill.per { background: linear-gradient(90deg, #006400, #228b22); }
+        .stat-fill.mnd { background: linear-gradient(90deg, #00008b, #4169e1); }
+        .stat-fill.cha { background: linear-gradient(90deg, #8b008b, #da70d6); }
+        .stat-fill.con { background: linear-gradient(90deg, #8b4513, #d2691e); }
+        .stat-fill.luc { background: linear-gradient(90deg, #b8860b, #ffd700); }
+
+        .stat-tier {
+            width: 50px;
+            text-align: right;
+            font-size: 0.8em;
+            font-weight: 700;
+        }
+
+        .tier-low { color: #8b4513; }
+        .tier-mid { color: #2f4f4f; }
+        .tier-high { color: #006400; }
+        .tier-peak { color: #00008b; }
+        .tier-break { color: #8b0000; }
+
+        .hidden-panel {
+            background: linear-gradient(135deg, rgba(26, 15, 46, 0.05), rgba(26, 15, 46, 0.1));
+            border: 1px dashed var(--accent-void);
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .hidden-panel h4 {
+            color: var(--accent-void);
+            font-size: 0.85em;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0,0,0,0.03);
+            border-radius: 4px;
+            font-size: 0.9em;
+            line-height: 1.8;
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px dashed rgba(0,0,0,0.1);
+        }
+
+        .log-entry:last-child { border-bottom: none; }
+
+        .log-time {
+            color: var(--accent-bronze);
+            font-size: 0.8em;
+            font-family: monospace;
+        }
+
+        .log-text { color: var(--ink); }
+        .log-combat { color: #8b0000; }
+        .log-break { color: #006400; }
+        .log-event { color: #00008b; }
+        .log-death { color: #4a0000; font-weight: bold; }
+
+        .startup-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .startup-screen h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            letter-spacing: 6px;
+        }
+
+        .startup-screen .epigraph {
+            font-style: italic;
+            color: var(--ink-light);
+            margin: 20px 0;
+            line-height: 2;
+            font-size: 1.1em;
+        }
+
+        .config-section {
+            text-align: left;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+
+        .config-section h3 {
+            color: var(--accent-bronze);
+            margin-bottom: 15px;
+            font-size: 1em;
+        }
+
+        .config-option {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 8px 0;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .config-option:hover, .config-option.selected {
+            border-color: var(--accent-gold);
+            background: rgba(184, 134, 11, 0.08);
+        }
+
+        .config-option input { margin-right: 12px; }
+
+        .config-option label {
+            flex: 1;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .config-option .config-desc {
+            font-size: 0.85em;
+            color: var(--ink-light);
+            margin-top: 4px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .pulse { animation: pulse 2s infinite; }
+
+        .ending-screen {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .ending-screen h2 {
+            font-size: 2em;
+            color: var(--accent-crimson);
+            margin-bottom: 20px;
+        }
+
+        .legacy-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .legacy-item {
+            background: rgba(255,255,255,0.3);
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .legacy-item .number {
+            font-size: 1.8em;
+            font-weight: 900;
+            color: var(--accent-gold);
+        }
+
+        .legacy-item .label {
+            font-size: 0.85em;
+            color: var(--ink-light);
+            margin-top: 5px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--parchment-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-bronze);
+            border-radius: 4px;
+        }
+
+        @media (max-width: 600px) {
+            .panel-grid { grid-template-columns: 1fr; }
+            .legacy-stats { grid-template-columns: 1fr; }
+            .title-block h1 { font-size: 1.4em; }
+        }
+
+        .void-text {
+            color: var(--accent-void);
+            text-shadow: 0 0 10px rgba(74, 48, 96, 0.3);
+        }
+
+        .gold-text {
+            color: var(--accent-gold);
+            text-shadow: 0 0 8px rgba(184, 134, 11, 0.3);
+        }
+
+        .crimson-text { color: var(--accent-crimson); }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 0.75em;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+
+        .badge-healthy { background: rgba(0, 100, 0, 0.15); color: #006400; }
+        .badge-wounded { background: rgba(139, 0, 0, 0.15); color: #8b0000; }
+        .badge-critical { background: rgba(139, 0, 0, 0.3); color: #4a0000; }
+        .badge-fragment { background: rgba(26, 15, 46, 0.15); color: var(--accent-void); }
+
+        .combat-arena {
+            background: linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.1));
+            border: 2px solid var(--accent-crimson);
+            border-radius: 4px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .combatants {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .combatant {
+            text-align: center;
+            flex: 1;
+        }
+
+        .combatant-name {
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .hp-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #228b22, #32cd32);
+            transition: width 0.5s ease;
+        }
+
+        .hp-fill.warning { background: linear-gradient(90deg, #b8860b, #daa520); }
+        .hp-fill.danger { background: linear-gradient(90deg, #8b0000, #dc143c); }
+
+        .hp-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.7em;
+            line-height: 12px;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        }
+
+        .vs-mark {
+            font-size: 1.5em;
+            font-weight: 900;
+            color: var(--accent-crimson);
+            margin: 0 20px;
+        }
+
+        .combat-log {
+            font-style: italic;
+            color: var(--ink-light);
+            text-align: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.03);
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: var(--parchment);
+            border: 3px solid var(--accent-gold);
+            border-radius: 4px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .modal-title {
+            font-size: 1.3em;
+            color: var(--accent-crimson);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .modal-body {
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            font-family: 'Noto Serif SC', serif;
+            font-size: 1em;
+            background: rgba(255,255,255,0.5);
+            margin: 5px 0;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .save-slot {
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .save-slot:hover {
+            border-color: var(--accent-gold);
+            background: rgba(184, 134, 11, 0.05);
+        }
+
+        .save-slot .save-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .save-slot .save-info {
+            font-size: 0.85em;
+            color: var(--ink-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameRoot"></div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+<script>
+// ==================== 核心引擎 ====================
+
+const KARNIT = {
+    version: '3.1',
+    epoch: 2960001,
+
+    roll: (sides) => Math.floor(Math.random() * sides) + 1,
+    rollRange: (min, max) => Math.floor(Math.random() * (max - min + 1)) + min,
+    clamp: (val, min, max) => Math.max(min, Math.min(max, val)),
+    pick: (arr) => arr[Math.floor(Math.random() * arr.length)],
+
+    certCounter: 0,
+    generateCert: function() {
+        this.certCounter++;
+        return `KARNIT-${Date.now().toString(36).toUpperCase()}-${String(this.certCounter).padStart(3, '0')}`;
+    }
+};
+
+// ==================== 数据表 ====================
+
+const DATA = {
+    continents: [
+        { name: '东舟大陆', weight: 35, regions: [
+            { name: '大楚帝国', weight: 4 }, { name: '北地兽人汗国', weight: 2 },
+            { name: '艾格精灵王国', weight: 1 }, { name: '熔岩王国', weight: 1 },
+            { name: '西海边鲛王国', weight: 1 }, { name: '边境地带', weight: 1 }
+        ]},
+        { name: '卡德利亚大陆', weight: 31, regions: [
+            { name: '银月精灵之森', weight: 3 }, { name: '赤焰帝国', weight: 2 },
+            { name: '兰顿教皇国', weight: 2 }, { name: '塔基骑士国', weight: 2 },
+            { name: '基比联邦', weight: 1 }, { name: '北山矮人帝国', weight: 1 },
+            { name: '卡宁联邦', weight: 1 }, { name: '边境地带', weight: 1 }
+        ]},
+        { name: '卡尼亚大陆', weight: 22, regions: [
+            { name: '南荒帝国', weight: 4 }, { name: '冰灵帝国', weight: 3 },
+            { name: '泰坦王国', weight: 1 }, { name: '蛮荒边境', weight: 1 },
+            { name: '冰川边境', weight: 1 }
+        ]},
+        { name: '圣庭洲', weight: 4, regions: [{ name: '神圣教廷帝国', weight: 1 }] },
+        { name: '商贸群岛', weight: 3, regions: [{ name: '碧波商贸国核心12岛', weight: 1 }] },
+        { name: '亡者之屿', weight: 2, regions: [{ name: '暗夜亡灵王国', weight: 1 }] },
+        { name: '小人洲', weight: 1, regions: [{ name: '小人国', weight: 1 }] },
+        { name: '海洋岛屿', weight: 2, regions: [
+            { name: '大型岛屿公国', weight: 1 }, { name: '海盗据点', weight: 1 }
+        ]}
+    ],
+
+    races: {
+        人类: { base: '下品', stats: { VIG: 0, PER: 0, MND: 0, CHA: 0, CON: 0, LUC: 0 }, desc: '适应力最强的种族，遍布卡尼特各地。' },
+        精灵: { base: '上品', stats: { VIG: -1, PER: 2, MND: 1, CHA: 1, CON: -1, LUC: 0 }, desc: '银月森林的长生种，感知与灵识超群。' },
+        矮人: { base: '良品', stats: { VIG: 2, PER: 0, MND: -1, CHA: -1, CON: 2, LUC: 0 }, desc: '北山深处的锻造大师，体魄与根骨惊人。' },
+        兽人: { base: '良品', stats: { VIG: 2, PER: 1, MND: -1, CHA: -1, CON: 1, LUC: -1 }, desc: '草原与荒原的战士，天生为战而生。' },
+        鲛人族: { base: '上品', stats: { VIG: 0, PER: 2, MND: 1, CHA: 2, CON: -1, LUC: 0 }, desc: '深海与沿岸的歌咏者，魅力与感知非凡。' },
+        元素族: { base: '极品', stats: { VIG: 0, PER: 1, MND: 2, CHA: 0, CON: 1, LUC: -1 }, desc: '法则凝结的生命，对元素有着本能的掌控。' },
+        泰坦族: { base: '灵品', stats: { VIG: 3, PER: -1, MND: 0, CHA: -1, CON: 3, LUC: -1 }, desc: '远古巨人的后裔，肉身承载力冠绝万族。' },
+        巨龙族: { base: '灵品', stats: { VIG: 2, PER: 1, MND: 1, CHA: 2, CON: 2, LUC: 1 }, desc: '天空与财富的支配者，各项天赋近乎完美。' },
+        混血族: { base: '良品', stats: { VIG: 0, PER: 0, MND: 0, CHA: 0, CON: 0, LUC: 0 }, desc: '双亲血脉交织，天赋波动剧烈。' },
+        死灵族: { base: '良品', stats: { VIG: 0, PER: 1, MND: 1, CHA: -2, CON: 2, LUC: 0 }, desc: '亡者之屿的居民，对死亡法则有着天然亲和。' },
+        小人族: { base: '上品', stats: { VIG: -2, PER: 2, MND: 2, CHA: 1, CON: -1, LUC: 1 }, desc: '体型娇小却灵识敏锐，擅长精密工艺与隐匿。' },
+        地精族: { base: '下品', stats: { VIG: -1, PER: 1, MND: 1, CHA: -2, CON: -1, LUC: 1 }, desc: '狡黠的商人种族，运势诡谲难测。' }
+    },
+
+    talentTiers: ['凡品','下品','良品','上品','极品','灵品','皇品','圣品','神品','道品','法则体'],
+
+    realms: [
+        { name: '凡人', maxLv: 0, lifeBonus: 0, breakRate: 100, mark: '尚未踏入超凡' },
+        { name: '炼脉', maxLv: 5, lifeBonus: 50, breakRate: 95, mark: '第一条能量通道' },
+        { name: '炼法', maxLv: 5, lifeBonus: 100, breakRate: 90, mark: '法核初凝' },
+        { name: '通法', maxLv: 5, lifeBonus: 150, breakRate: 85, mark: '炁流转无碍' },
+        { name: '黑铁', maxLv: 5, lifeBonus: 300, breakRate: 75, mark: '元素质变' },
+        { name: '青铜', maxLv: 5, lifeBonus: 400, breakRate: 65, mark: '复合法术' },
+        { name: '白银', maxLv: 5, lifeBonus: 600, breakRate: 55, mark: '凡境巅峰' },
+        { name: '黄金', maxLv: 5, lifeBonus: 1000, breakRate: 35, mark: '领域雏形' },
+        { name: '白精', maxLv: 5, lifeBonus: 2000, breakRate: 15, mark: '法则之线清晰' },
+        { name: '星钻', maxLv: 5, lifeBonus: 3000, breakRate: 10, mark: '概念攻击觉醒' },
+        { name: '淬星', maxLv: 5, lifeBonus: 5000, breakRate: 5, mark: '触碰支流' },
+        { name: '耀辉', maxLv: 5, lifeBonus: 8000, breakRate: 2.5, mark: '局部修改规则' },
+        { name: '天法', maxLv: 5, lifeBonus: 20000, breakRate: 1, mark: '肉身完全法则化' },
+        { name: '皇法', maxLv: 5, lifeBonus: 40000, breakRate: 0.5, mark: '法则分身' },
+        { name: '传说', maxLv: 5, lifeBonus: 80000, breakRate: 0.01, mark: '传说之力反馈' },
+        { name: '半神', maxLv: 5, lifeBonus: 160000, breakRate: 0.005, mark: '神格凝聚中' }
+    ],
+
+    classes: {
+        未选择: { bonus: {}, cost: '', desc: '尚未选择职业道路。' },
+        法师: { bonus: { MND: 2, CHA: -1 }, cost: '认知污染', desc: '以理性解析法则，代价是情感逐渐被逻辑取代。' },
+        战士: { bonus: { VIG: 2, MND: -1 }, cost: '痛觉钝化', desc: '以肉身承载力量，代价是对痛苦的感知逐渐模糊。' },
+        影刃: { bonus: { PER: 2, CHA: -1 }, cost: '存在稀释', desc: '潜伏于阴影之中，代价是自身存在逐渐被世界遗忘。' },
+        匠魂: { bonus: { CON: 2, PER: 1 }, cost: '知识诅咒', desc: '以解构万物为道，代价是失去欣赏整体之美的能力。' },
+        圣音: { bonus: { MND: 1, CHA: 1 }, cost: '信仰债务', desc: '借神力施展奇迹，代价是灵魂逐渐归属于信仰对象。' }
+    },
+
+    elements: ['火','水','风','土','雷','冰','光','暗','生命','死亡','空间','时间'],
+
+    encounters: {
+        城市街道: [
+            { type: '无事', weight: 60 }, { type: '低级威胁', weight: 20, desc: '扒手/醉汉滋事' },
+            { type: '中级威胁', weight: 15, desc: '贵族车队冲突/影刃监视' },
+            { type: '高级威胁', weight: 4, desc: '高阶强者威压/邪教仪式' },
+            { type: '特殊', weight: 1, desc: '神凡裂隙闪现' }
+        ],
+        荒野平原: [
+            { type: '无事', weight: 40 }, { type: '低级威胁', weight: 25, desc: '低级魔兽/强盗' },
+            { type: '中级威胁', weight: 20, desc: '中级魔兽/流浪商人' },
+            { type: '高级威胁', weight: 10, desc: '高级魔兽/战阵余波' },
+            { type: '特殊', weight: 5, desc: '遗迹入口/古战场怨灵' }
+        ],
+        深山老林: [
+            { type: '无事', weight: 20 }, { type: '低级威胁', weight: 20, desc: '中级魔兽' },
+            { type: '中级威胁', weight: 30, desc: '高级魔兽/毒瘴' },
+            { type: '高级威胁', weight: 20, desc: '顶级魔兽/隐居强者' },
+            { type: '特殊', weight: 10, desc: '上古阵法/灵植守护兽' }
+        ],
+        上古遗迹: [
+            { type: '无事', weight: 5 }, { type: '低级威胁', weight: 10, desc: '陷阱触发' },
+            { type: '中级威胁', weight: 25, desc: '守护傀儡/亡灵' },
+            { type: '高级威胁', weight: 30, desc: '法则乱流/其他探险者' },
+            { type: '特殊', weight: 30, desc: '至宝显现/诅咒降临' }
+        ]
+    },
+
+    worldEvents: [
+        '超级帝国开战，边境烽火连天',
+        '大规模瘟疫席卷数座城市',
+        '神凡裂隙在某地突然出现',
+        '上古禁忌秘境涌现',
+        '政治博弈导致贵族政变',
+        '商业波动引发通货膨胀',
+        '魔兽大规模迁徙',
+        '新秘境开启，冒险者蜂拥而至',
+        '新灵脉被发现，各方势力争夺',
+        '天才少年横空出世',
+        '神器出世引发血战',
+        '纪元脉动指数上升，神凡壁垒削弱'
+    ],
+
+    npcPool: [
+        { name: '楚天明', region: '东舟大陆', realm: 5, class: '战士', attitude: 0 },
+        { name: '塞拉菲娜', region: '卡德利亚大陆', realm: 7, class: '法师', attitude: 10 },
+        { name: '格里姆', region: '卡德利亚大陆', realm: 4, class: '匠魂', attitude: -5 },
+        { name: '伊莎贝拉', region: '圣庭洲', realm: 6, class: '圣音', attitude: 20 },
+        { name: '阿古拉', region: '卡尼亚大陆', realm: 8, class: '战士', attitude: 0 },
+        { name: '冰璃', region: '卡尼亚大陆', realm: 9, class: '法师', attitude: -10 },
+        { name: '骨语者·莫拉', region: '亡者之屿', realm: 7, class: '法师', attitude: -20 },
+        { name: '微光·齿轮', region: '小人洲', realm: 4, class: '匠魂', attitude: 15 },
+        { name: '海妖·塞壬', region: '商贸群岛', realm: 6, class: '影刃', attitude: 5 },
+        { name: '圣·奥古斯都', region: '圣庭洲', realm: 10, class: '圣音', attitude: 30 }
+    ]
+};
+
+// ==================== 游戏状态 ====================
+
+let GameState = {
+    config: {
+        mode: 'EXILED_SOUL',
+        ui: 'A',
+        difficulty: 'II',
+        worldDepth: '完整',
+        gender: '男',
+        name: '',
+        race: ''
+    },
+
+    character: null,
+    world: {
+        epochPulse: 60 + KARNIT.roll(40),
+        year: 2960001,
+        season: '春',
+        events: [],
+        inflation: 1.0,
+        location: '出生点'
+    },
+
+    log: [],
+    turn: 0,
+    phase: 'startup',
+    combat: null,
+
+    save: function() {
+        const data = JSON.stringify({
+            config: this.config,
+            character: this.character,
+            world: this.world,
+            log: this.log,
+            turn: this.turn,
+            phase: this.phase,
+            certCounter: KARNIT.certCounter
+        });
+        localStorage.setItem('karnit_save', data);
+        addLog('游戏已保存至本地存档。');
+    },
+
+    load: function() {
+        const data = localStorage.getItem('karnit_save');
+        if (data) {
+            const parsed = JSON.parse(data);
+            this.config = parsed.config;
+            this.character = parsed.character;
+            this.world = parsed.world;
+            this.log = parsed.log;
+            this.turn = parsed.turn;
+            this.phase = parsed.phase;
+            KARNIT.certCounter = parsed.certCounter || 0;
+            return true;
+        }
+        return false;
+    },
+
+    clearSave: function() {
+        localStorage.removeItem('karnit_save');
+    }
+};
+
+// ==================== 角色生成器 ====================
+
+function generateBirth() {
+    const char = {
+        name: GameState.config.name || generateName(),
+        gender: GameState.config.gender,
+        race: GameState.config.race || weightedPick(Object.keys(DATA.races)),
+        age: 0,
+        cert: KARNIT.generateCert(),
+
+        continent: '',
+        region: '',
+        familyClass: '',
+
+        baseLifespan: 80,
+        realmBonus: 0,
+        ageLived: 0,
+        healthStatus: '健康',
+        injuries: [],
+
+        realm: 0,
+        level: 0,
+        accumulation: 0,
+        insight: 0,
+        vessel: 0,
+        mindstate: 50,
+        blockage: [],
+
+        talentTier: '',
+        talentElement: '',
+        cultivationSpeed: 100,
+        breakBonus: 0,
+        specialBody: '无',
+
+        stats: { VIG: 0, PER: 0, MND: 0, CHA: 0, CON: 0, LUC: 0 },
+
+        class: '未选择',
+        classCost: 0,
+        anchors: [],
+
+        money: { copper: 0, silver: 0, gold: 0, purple: 0, crystal: 0 },
+        inventory: [],
+
+        family: {},
+        faction: '独立',
+        factionRank: '外围',
+        contribution: 0,
+        reputation: {},
+        contacts: [],
+        faith: '无信仰',
+        faithDebt: 0,
+
+        fragment: false,
+        fragmentLevel: 0,
+        hunger: 0,
+        karmaIndex: 0,
+        fateOffset: 0,
+        mindDemon: 0,
+        worldMark: 0,
+
+        karma: { blood: [], grace: [], item: [], fate: [] },
+
+        legend: 0,
+        achievements: [],
+
+        location: '出生点',
+        currentGoal: '生存',
+        focusNPCs: []
+    };
+
+    // 步骤1：大陆与地域
+    const cont = weightedPick(DATA.continents, 'weight');
+    char.continent = cont.name;
+    char.region = weightedPick(cont.regions, 'weight').name;
+
+    // 步骤2：家庭阶层
+    const familyRoll = KARNIT.roll(1000);
+    if (familyRoll <= 80) char.familyClass = '赤贫';
+    else if (familyRoll <= 700) char.familyClass = '平民';
+    else if (familyRoll <= 900) char.familyClass = '中产';
+    else if (familyRoll <= 980) char.familyClass = '富裕';
+    else if (familyRoll <= 999) {
+        char.familyClass = '贵族';
+        if (KARNIT.roll(100) <= 60) char.family.nobleType = '世袭贵族';
+        else char.family.nobleType = '高阶超凡者家庭';
+    } else {
+        char.familyClass = '超凡世家';
+        char.realmBonus += 100;
+        char.mindDemon += 5;
+    }
+
+    // 步骤3：种族与天赋
+    const raceData = DATA.races[char.race];
+    const talentRoll = KARNIT.roll(100);
+    let tierIdx = 1;
+
+    if (char.race === '人类') {
+        if (talentRoll <= 40) tierIdx = 0;
+        else if (talentRoll <= 70) tierIdx = 1;
+        else if (talentRoll <= 85) tierIdx = 2;
+        else if (talentRoll <= 95) tierIdx = 3;
+        else if (talentRoll <= 99) tierIdx = 4;
+        else tierIdx = KARNIT.roll(2) === 1 ? 9 : 0;
+    } else if (char.race === '精灵') {
+        if (talentRoll <= 30) tierIdx = 2;
+        else if (talentRoll <= 60) tierIdx = 3;
+        else if (talentRoll <= 80) tierIdx = 4;
+        else if (talentRoll <= 95) tierIdx = 5;
+        else if (talentRoll <= 99) tierIdx = 6;
+        else tierIdx = 9;
+    } else if (char.race === '矮人' || char.race === '兽人' || char.race === '死灵族') {
+        if (talentRoll <= 30) tierIdx = 0;
+        else if (talentRoll <= 70) tierIdx = 2;
+        else if (talentRoll <= 90) tierIdx = 3;
+        else if (talentRoll <= 98) tierIdx = 4;
+        else tierIdx = 9;
+    } else if (char.race === '元素族') {
+        if (talentRoll <= 20) tierIdx = 3;
+        else if (talentRoll <= 60) tierIdx = 4;
+        else if (talentRoll <= 85) tierIdx = 5;
+        else if (talentRoll <= 98) tierIdx = 6;
+        else tierIdx = 9;
+    } else if (char.race === '巨龙族' || char.race === '泰坦族') {
+        if (talentRoll <= 20) tierIdx = 4;
+        else if (talentRoll <= 60) tierIdx = 5;
+        else if (talentRoll <= 85) tierIdx = 6;
+        else if (talentRoll <= 98) tierIdx = 7;
+        else tierIdx = 8;
+    }
+
+    char.talentTier = DATA.talentTiers[tierIdx] || '下品';
+    char.talentElement = KARNIT.pick(DATA.elements);
+
+    // 步骤4：源核碎片
+    if (GameState.config.mode === 'FRAGMENT_VESSEL') {
+        if (KARNIT.roll(20) === 20) {
+            char.fragment = true;
+            char.fragmentLevel = 1;
+            char.hunger = 20;
+        }
+    } else if (GameState.config.mode === 'FATE_WOVEN') {
+        if (KARNIT.roll(100) === 100) {
+            char.fragment = true;
+            char.fragmentLevel = 1;
+            char.hunger = 20;
+        }
+    }
+
+    // 步骤5：因果锚定
+    for (let i = 0; i < 3; i++) {
+        const karmaRoll = KARNIT.roll(100);
+        let type = '';
+        if (karmaRoll <= 30) type = '当地势力';
+        else if (karmaRoll <= 55) type = '未来导师/仇敌';
+        else if (karmaRoll <= 80) type = '物品/地点';
+        else if (karmaRoll <= 85) type = '神界注视';
+        else if (karmaRoll <= 95) type = '碎片共鸣';
+        else type = '无特殊';
+
+        if (type !== '无特殊') {
+            const karmaTypes = ['blood', 'grace', 'item', 'fate'];
+            const kt = KARNIT.pick(karmaTypes);
+            char.karma[kt].push({
+                type: type,
+                strength: KARNIT.rollRange(10, 50),
+                status: '休眠',
+                desc: generateKarmaDesc(type)
+            });
+        }
+    }
+
+    generateStats(char);
+    generateFamily(char);
+    generateStartingMoney(char);
+
+    return char;
+}
+
+function generateStats(char) {
+    const raceData = DATA.races[char.race];
+    const classMultipliers = {
+        '赤贫': { min: 3, max: 10, vigConPenalty: KARNIT.roll(3) },
+        '平民': { min: 3, max: 12, vigConPenalty: 0 },
+        '中产': { min: 5, max: 14, vigConPenalty: 0 },
+        '富裕': { min: 8, max: 15, vigConPenalty: 0 },
+        '贵族': { min: 10, max: 15, vigConPenalty: 0 },
+        '超凡世家': { min: 12, max: 15, vigConPenalty: 0 }
+    };
+
+    const mult = classMultipliers[char.familyClass];
+
+    ['VIG','PER','MND','CHA','CON','LUC'].forEach(stat => {
+        let base = KARNIT.rollRange(mult.min, mult.max);
+        base += (raceData.stats[stat] || 0);
+        if ((stat === 'VIG' || stat === 'CON') && mult.vigConPenalty) {
+            base -= mult.vigConPenalty;
+        }
+        char.stats[stat] = KARNIT.clamp(base, 1, 15);
+    });
+
+    const talentBonus = Math.floor(DATA.talentTiers.indexOf(char.talentTier) / 2);
+    char.stats.MND += talentBonus;
+    char.stats.CON += Math.floor(talentBonus / 2);
+    char.cultivationSpeed = 100 + (talentBonus * 10);
+    char.breakBonus = talentBonus * 2;
+}
+
+function generateFamily(char) {
+    const familyTemplates = {
+        '赤贫': {
+            father: '贫苦农夫/流民',
+            mother: '纺织女工/帮佣',
+            siblings: KARNIT.rollRange(2, 5),
+            home: '漏风的茅草屋',
+            crisisRate: 5
+        },
+        '平民': {
+            father: '手艺人/小商贩/士兵',
+            mother: '家庭主妇/裁缝',
+            siblings: KARNIT.rollRange(1, 3),
+            home: '木制平房',
+            crisisRate: 2
+        },
+        '中产': {
+            father: '商人/低级军官/学者',
+            mother: '有教养的主妇',
+            siblings: KARNIT.rollRange(0, 2),
+            home: '石砌宅院',
+            crisisRate: 1
+        },
+        '富裕': {
+            father: '大商人/地方官员',
+            mother: '贵族出身/名媛',
+            siblings: KARNIT.rollRange(0, 2),
+            home: '庄园别墅',
+            crisisRate: 0
+        },
+        '贵族': {
+            father: char.family.nobleType === '世袭贵族' ? '世袭男爵/子爵' : '耀辉境强者',
+            mother: '贵族嫡女/联姻对象',
+            siblings: KARNIT.rollRange(0, 3),
+            home: '城堡/高塔',
+            crisisRate: 0
+        },
+        '超凡世家': {
+            father: '白精境以上强者',
+            mother: '同阶超凡者',
+            siblings: KARNIT.rollRange(0, 2),
+            home: '浮空塔/秘境洞府',
+            crisisRate: 0
+        }
+    };
+
+    char.family = { ...familyTemplates[char.familyClass], class: char.familyClass };
+}
+
+function generateStartingMoney(char) {
+    const moneyMap = {
+        '赤贫': { copper: KARNIT.rollRange(10, 50) },
+        '平民': { copper: KARNIT.rollRange(50, 200), silver: KARNIT.rollRange(0, 5) },
+        '中产': { silver: KARNIT.rollRange(10, 50), gold: KARNIT.rollRange(0, 2) },
+        '富裕': { gold: KARNIT.rollRange(10, 50), purple: KARNIT.rollRange(0, 5) },
+        '贵族': { gold: KARNIT.rollRange(50, 200), purple: KARNIT.rollRange(5, 20) },
+        '超凡世家': { purple: KARNIT.rollRange(10, 50), crystal: KARNIT.rollRange(0, 2) }
+    };
+
+    char.money = { copper: 0, silver: 0, gold: 0, purple: 0, crystal: 0, ...moneyMap[char.familyClass] };
+}
+
+function generateName() {
+    const names = ['艾尔文','塞拉斯','伊莲娜','雷恩','薇薇安','卡洛斯','艾拉','格雷','露娜','索尔','菲奥娜','但丁'];
+    return KARNIT.pick(names);
+}
+
+function generateKarmaDesc(type) {
+    const descs = {
+        '当地势力': '你被某个地下帮派标记，或被一位贵族暗中庇护。',
+        '未来导师/仇敌': '一位耀辉境强者感应到了你的天赋，或影刃组织接到了关于你的委托。',
+        '物品/地点': '你的襁褓中藏着一枚神秘符文石，或家乡地下埋着上古遗迹入口。',
+        '神界注视': '某位神境以上的存在，透过命运丝线看到了你的轮廓。',
+        '碎片共鸣': '你曾接触过碎片持有者，体内残留着微弱的共鸣痕迹。'
+    };
+    return descs[type] || '未知的因果纠缠。';
+}
+
+function weightedPick(arr, weightKey) {
+    if (!Array.isArray(arr)) {
+        const keys = Object.keys(arr);
+        return arr[keys[Math.floor(Math.random() * keys.length)]];
+    }
+    if (!weightKey) return arr[Math.floor(Math.random() * arr.length)];
+    const total = arr.reduce((sum, item) => sum + (item[weightKey] || 1), 0);
+    let roll = Math.random() * total;
+    for (const item of arr) {
+        roll -= (item[weightKey] || 1);
+        if (roll <= 0) return item;
+    }
+    return arr[0];
+}
+
+// ==================== 渲染引擎 ====================
+
+function renderScreen(content) {
+    const root = document.getElementById('gameRoot');
+    root.innerHTML = '';
+    if (typeof content === 'string') {
+        root.innerHTML = content;
+    } else if (content instanceof HTMLElement) {
+        root.appendChild(content);
+    }
+    const children = root.children;
+    for (let i = 0; i < children.length; i++) {
+        children[i].classList.add('fade-in');
+        children[i].style.animationDelay = `${i * 0.1}s`;
+    }
+}
+
+function createParchment(content, cert) {
+    const div = document.createElement('div');
+    div.className = 'parchment';
+    if (cert) {
+        const certDiv = document.createElement('div');
+        certDiv.className = 'cert-num';
+        certDiv.textContent = cert;
+        div.appendChild(certDiv);
+    }
+    if (typeof content === 'string') {
+        div.innerHTML += content;
+    } else {
+        div.appendChild(content);
+    }
+    return div;
+}
+
+function showModal(title, body, actions) {
+    const overlay = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    let html = `<div class="modal-title">${title}</div>`;
+    html += `<div class="modal-body">${body}</div>`;
+    if (actions && actions.length > 0) {
+        html += '<div class="modal-actions">';
+        actions.forEach(action => {
+            html += `<button class="btn ${action.class || ''}" onclick="${action.onclick}">${action.text}</button>`;
+        });
+        html += '</div>';
+    }
+    content.innerHTML = html;
+    overlay.classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+}
+
+function addLog(text, type) {
+    const entry = {
+        time: `纪元${GameState.world.year}年·${GameState.world.season}`,
+        text: text,
+        type: type || 'normal'
+    };
+    GameState.log.push(entry);
+    if (GameState.log.length > 100) GameState.log.shift();
+}
+
+// ==================== 面板渲染 ====================
+
+function renderStatBar(stat, value, label) {
+    const pct = Math.min(100, (value / 15) * 100);
+    const tier = value <= 6 ? '低' : value <= 9 ? '中' : value <= 12 ? '高' : value <= 14 ? '巅峰' : '破格';
+    const tierClass = value <= 6 ? 'tier-low' : value <= 9 ? 'tier-mid' : value <= 12 ? 'tier-high' : value <= 14 ? 'tier-peak' : 'tier-break';
+    return `
+        <div class="stat-bar">
+            <div class="stat-name">${label}</div>
+            <div class="stat-track"><div class="stat-fill ${stat.toLowerCase()}" style="width:${pct}%"></div></div>
+            <div class="stat-tier ${tierClass}">${tier}</div>
+        </div>
+    `;
+}
+
+function renderCharacterPanel(char) {
+    const realm = DATA.realms[char.realm];
+    const realmName = realm ? realm.name : '凡人';
+    const remainingLife = (char.baseLifespan + char.realmBonus) - char.ageLived;
+    const lifePercent = Math.floor((remainingLife / (char.baseLifespan + char.realmBonus)) * 100);
+
+    let html = `
+        <div class="title-block">
+            <h1>卡尼特存在公证 · 纪元书页</h1>
+            <div class="subtitle">星耀纪元第${GameState.world.year}万年 · ${GameState.world.season}</div>
+        </div>
+        <div class="panel-grid">
+            <div class="panel-section full-width">
+                <h3>【基础存在】</h3>
+                <div class="panel-row"><span class="panel-label">姓名</span><span class="panel-value">${char.name}</span></div>
+                <div class="panel-row"><span class="panel-label">种族</span><span class="panel-value">${char.race}</span></div>
+                <div class="panel-row"><span class="panel-label">性别</span><span class="panel-value">${char.gender}</span></div>
+                <div class="panel-row"><span class="panel-label">年龄</span><span class="panel-value">${char.ageLived}岁</span></div>
+                <div class="panel-row"><span class="panel-label">出生地</span><span class="panel-value">${char.continent} · ${char.region}</span></div>
+                <div class="panel-row"><span class="panel-label">家庭阶层</span><span class="panel-value">${char.familyClass}</span></div>
+            </div>
+            <div class="panel-section">
+                <h3>【生命指标】</h3>
+                <div class="panel-row"><span class="panel-label">自然寿命</span><span class="panel-value">${char.baseLifespan}年</span></div>
+                <div class="panel-row"><span class="panel-label">境界增益</span><span class="panel-value gold-text">+${char.realmBonus}年</span></div>
+                <div class="panel-row"><span class="panel-label">剩余寿元</span><span class="panel-value ${lifePercent < 20 ? 'crimson-text' : ''}">${remainingLife}年 (${lifePercent}%)</span></div>
+                <div class="panel-row"><span class="panel-label">健康状态</span><span class="panel-value">${char.healthStatus}</span></div>
+            </div>
+            <div class="panel-section">
+                <h3>【境界修为】</h3>
+                <div class="panel-row"><span class="panel-label">当前境界</span><span class="panel-value gold-text">${realmName}${char.level > 0 ? ' Lv.' + char.level : ''}</span></div>
+                <div class="panel-row"><span class="panel-label">法核状态</span><span class="panel-value">健康</span></div>
+                <div class="panel-row"><span class="panel-label">主修法则</span><span class="panel-value">${char.talentElement || '未显'}</span></div>
+                <div class="panel-row"><span class="panel-label">职业</span><span class="panel-value">${char.class}</span></div>
+            </div>
+            <div class="panel-section full-width">
+                <h3>【六维状态】</h3>
+                ${renderStatBar('VIG', char.stats.VIG, '体魄')}
+                ${renderStatBar('PER', char.stats.PER, '感知')}
+                ${renderStatBar('MND', char.stats.MND, '灵识')}
+                ${renderStatBar('CHA', char.stats.CHA, '魅力')}
+                ${renderStatBar('CON', char.stats.CON, '根骨')}
+                ${renderStatBar('LUC', char.stats.LUC, '运势')}
+            </div>
+            <div class="panel-section">
+                <h3>【天赋】</h3>
+                <div class="panel-row"><span class="panel-label">天赋等级</span><span class="panel-value gold-text">${char.talentTier}</span></div>
+                <div class="panel-row"><span class="panel-label">元素亲和</span><span class="panel-value">${char.talentElement}</span></div>
+                <div class="panel-row"><span class="panel-label">修炼速度</span><span class="panel-value">${char.cultivationSpeed}%</span></div>
+                <div class="panel-row"><span class="panel-label">突破加成</span><span class="panel-value">${char.breakBonus > 0 ? '+' : ''}${char.breakBonus}%</span></div>
+            </div>
+            <div class="panel-section">
+                <h3>【经济】</h3>
+                <div class="panel-row"><span class="panel-label">紫金币</span><span class="panel-value gold-text">${char.money.purple}</span></div>
+                <div class="panel-row"><span class="panel-label">金币</span><span class="panel-value">${char.money.gold}</span></div>
+                <div class="panel-row"><span class="panel-label">银币</span><span class="panel-value">${char.money.silver}</span></div>
+                <div class="panel-row"><span class="panel-label">铜币</span><span class="panel-value">${char.money.copper}</span></div>
+            </div>
+    `;
+
+    if (char.fragment) {
+        html += `
+            <div class="panel-section full-width hidden-panel">
+                <h4>【源核碎片状态】</h4>
+                <div class="panel-row"><span class="panel-label">碎片等级</span><span class="panel-value void-text">${char.fragmentLevel === 1 ? '微尘' : '主碎片'}</span></div>
+                <div class="panel-row"><span class="panel-label">源核饥饿度</span><span class="panel-value ${char.hunger > 70 ? 'crimson-text' : ''}">${char.hunger}/100</span></div>
+                <div class="panel-row"><span class="panel-label">因果缠绕</span><span class="panel-value">${char.karmaIndex}</span></div>
+                <div class="panel-row"><span class="panel-label">命运偏移</span><span class="panel-value">${char.fateOffset > 0 ? '+' : ''}${char.fateOffset}</span></div>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    return html;
+}
+
+function renderCompactPanel(char) {
+    const realm = DATA.realms[char.realm];
+    const remainingLife = (char.baseLifespan + char.realmBonus) - char.ageLived;
+    const lifePercent = Math.floor((remainingLife / (char.baseLifespan + char.realmBonus)) * 100);
+
+    return `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.9em;margin-bottom:15px;">
+            <div><strong>${char.name}</strong> · ${char.race} · ${char.ageLived}岁</div>
+            <div style="text-align:right;"><span class="gold-text">${realm ? realm.name : '凡人'}${char.level > 0 ? ' Lv.' + char.level : ''}</span></div>
+            <div>寿元: ${remainingLife}年 (${lifePercent}%)</div>
+            <div style="text-align:right;">职业: ${char.class}</div>
+            <div>六维: V${char.stats.VIG} P${char.stats.PER} M${char.stats.MND} C${char.stats.CHA} O${char.stats.CON} L${char.stats.LUC}</div>
+            <div style="text-align:right;">资金: ${char.money.purple}紫 ${char.money.gold}金</div>
+        </div>
+    `;
+}
+
+// ==================== 游戏画面 ====================
+
+function showStartup() {
+    const html = `
+        <div class="parchment startup-screen">
+            <h1>卡尼特人生模拟器</h1>
+            <div class="subtitle">源核运转协议 v3.1</div>
+            <div class="divider"></div>
+            <div class="epigraph">
+                虚无之中，混沌源核缓缓搏动。<br>
+                你感受到三千法则如丝线般从黑暗中蔓延而出，<br>
+                缠绕、交织、编织成命运的轮廓。<br><br>
+                你将要诞生的世界名为卡尼特。<br>
+                它不是为你而转动的。
+            </div>
+            <div class="divider"></div>
+            <button class="btn" onclick="showConfig()">开始新的人生</button>
+            <button class="btn btn-secondary" onclick="loadGame()">读取存档</button>
+        </div>
+    `;
+    renderScreen(html);
+}
+
+function showConfig() {
+    const html = `
+        <div class="parchment">
+            <div class="title-block">
+                <h1>初始化协议</h1>
+                <div class="subtitle">定义你的存在参数</div>
+            </div>
+
+            <div class="config-section">
+                <h3>【人生模式】</h3>
+                <div class="config-option selected" onclick="selectConfig('mode','EXILED_SOUL',this)">
+                    <input type="radio" name="mode" value="EXILED_SOUL" checked>
+                    <label>异界降临者<br><span class="config-desc">保留前世完整认知，出生为婴儿，需重新学习卡尼特语与社会规则。</span></label>
+                </div>
+                <div class="config-option" onclick="selectConfig('mode','FRAGMENT_VESSEL',this)">
+                    <input type="radio" name="mode" value="FRAGMENT_VESSEL">
+                    <label>微尘持有者<br><span class="config-desc">灵魂与微尘级源核碎片融合出生，天生携带微弱世界权限与"源核饥饿"。</span></label>
+                </div>
+                <div class="config-option" onclick="selectConfig('mode','NATIVE_KARNIT',this)">
+                    <input type="radio" name="mode" value="NATIVE_KARNIT">
+                    <label>卡尼特原住民<br><span class="config-desc">无前世记忆，真正作为此世界生灵出生。最沉浸的模式。</span></label>
+                </div>
+                <div class="config-option" onclick="selectConfig('mode','FATE_WOVEN',this)">
+                    <input type="radio" name="mode" value="FATE_WOVEN">
+                    <label>命运织线<br><span class="config-desc">身份、种族、家庭、天赋全部交给命运纺织法则决定。</span></label>
+                </div>
+            </div>
+
+            <div class="config-section">
+                <h3>【难度】</h3>
+                <div class="config-option" onclick="selectConfig('difficulty','I',this)">
+                    <input type="radio" name="difficulty" value="I">
+                    <label>源质亲和 · 经济与成长稍宽松</label>
+                </div>
+                <div class="config-option selected" onclick="selectConfig('difficulty','II',this)">
+                    <input type="radio" name="difficulty" value="II" checked>
+                    <label>标准法则 · 正常世界逻辑，死亡真实且不可逆</label>
+                </div>
+                <div class="config-option" onclick="selectConfig('difficulty','III',this)">
+                    <input type="radio" name="difficulty" value="III">
+                    <label>纪元终焉 · 金钱、疾病、战斗更严肃；源核饥饿加速</label>
+                </div>
+            </div>
+
+            <div class="config-section">
+                <h3>【自定义】</h3>
+                <div style="margin:10px 0;">
+                    <label style="display:block;margin-bottom:5px;color:var(--ink-light);">姓名（留空则自动生成）</label>
+                    <input type="text" id="charName" class="input-field" placeholder="输入姓名...">
+                </div>
+                <div style="margin:10px 0;">
+                    <label style="display:block;margin-bottom:5px;color:var(--ink-light);">性别</label>
+                    <select id="charGender" class="input-field">
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+                <div style="margin:10px 0;">
+                    <label style="display:block;margin-bottom:5px;color:var(--ink-light);">种族（留空则随机）</label>
+                    <select id="charRace" class="input-field">
+                        <option value="">随机</option>
+                        <option value="人类">人类</option>
+                        <option value="精灵">精灵</option>
+                        <option value="矮人">矮人</option>
+                        <option value="兽人">兽人</option>
+                        <option value="鲛人族">鲛人族</option>
+                        <option value="元素族">元素族</option>
+                        <option value="泰坦族">泰坦族</option>
+                        <option value="巨龙族">巨龙族</option>
+                        <option value="混血族">混血族</option>
+                        <option value="死灵族">死灵族</option>
+                        <option value="小人族">小人族</option>
+                        <option value="地精族">地精族</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn" onclick="startGame()">源核，启动</button>
+                <button class="btn btn-secondary" onclick="showStartup()">返回</button>
+            </div>
+        </div>
+    `;
+    renderScreen(html);
+}
+
+function selectConfig(key, value, el) {
+    GameState.config[key] = value;
+    const parent = el.parentElement;
+    parent.querySelectorAll('.config-option').forEach(opt => opt.classList.remove('selected'));
+    el.classList.add('selected');
+    el.querySelector('input').checked = true;
+}
+
+function startGame() {
+    GameState.config.name = document.getElementById('charName').value.trim();
+    GameState.config.gender = document.getElementById('charGender').value;
+    GameState.config.race = document.getElementById('charRace').value;
+
+    GameState.character = generateBirth();
+    GameState.phase = 'birth';
+    GameState.turn = 0;
+    GameState.log = [];
+
+    addLog(`源核公证：${GameState.character.name}于星耀纪元第${GameState.world.year}万年在${GameState.character.continent}·${GameState.character.region}诞生。`, 'event');
+
+    showBirthNarrative();
+}
+
+function showBirthNarrative() {
+    const char = GameState.character;
+    const narrative = `
+        <div class="narrative">
+            <p>你的第一口呼吸充满了${char.continent}特有的空气——${char.region}的风带着${char.talentElement === '火' ? '硫磺与熔岩' : char.talentElement === '水' ? '海盐与潮气' : char.talentElement === '风' ? '高空的清冽' : '泥土与草木'}的气息。</p>
+            <p>你出生在${char.family.home}中。${char.family.father}和${char.family.mother}是你的父母。你${char.family.siblings > 0 ? '有' + char.family.siblings + '个兄弟姐妹，哭声与笑声交织在这个狭小的空间里' : '是独子，所有的目光与期望都集中在你一人身上'}。</p>
+            <p>作为${char.race}，你的天赋被评定为<span class="gold-text">${char.talentTier}</span>。在${char.familyClass === '赤贫' ? '贫困的阴霾' : char.familyClass === '平民' ? '平凡的烟火' : char.familyClass === '中产' ? '安稳的石墙' : char.familyClass === '富裕' ? '富足的丝绸' : '权力的阴影'}中，这似乎是一种讽刺，或是一种希望。</p>
+            ${char.fragment ? '<p class="quote">你尚未睁眼，便感到体内有什么东西在搏动——不是心脏，而是更深处的、与世界脉搏同步的震颤。一枚微尘级源核碎片，已在你的灵魂中扎根。</p>' : ''}
+        </div>
+    `;
+
+    const html = `
+        ${createParchment(narrative, char.cert).outerHTML}
+        <div class="parchment">
+            <h3 style="color:var(--accent-bronze);margin-bottom:15px;">【存在标识面板】</h3>
+            ${renderCharacterPanel(char)}
+            <div class="divider"></div>
+            <div style="text-align:center;">
+                <button class="btn" onclick="advanceTime(1)">度过第一年</button>
+                <button class="btn btn-secondary" onclick="showFullPanel()">查看完整面板</button>
+            </div>
+        </div>
+    `;
+    renderScreen(html);
+}
+
+function showFullPanel() {
+    const char = GameState.character;
+    showModal('完整存在面板', renderCharacterPanel(char), [
+        { text: '关闭', onclick: 'closeModal()', class: 'btn-secondary' }
+    ]);
+}
+
+// ==================== 时间推进与事件 ====================
+
+function advanceTime(years) {
+    const char = GameState.character;
+
+    for (let i = 0; i < years; i++) {
+        char.ageLived++;
+        GameState.turn++;
+
+        // 季节轮转
+        const seasons = ['春','夏','秋','冬'];
+        GameState.world.season = seasons[GameState.turn % 4];
+        if (GameState.turn % 4 === 0) GameState.world.year++;
+
+        // 生存检定（赤贫）
+        if (char.familyClass === '赤贫' && KARNIT.roll(100) <= 5) {
+            const crises = ['疾病','饥荒','战乱波及','家庭破碎'];
+            const crisis = KARNIT.pick(crises);
+            char.healthStatus = '疾病缠身';
+            char.stats.VIG -= 1;
+            addLog(`${char.ageLived}岁：遭遇${crisis}，体魄受损。`, 'event');
+        }
+
+        // 元素亲和显现（8岁）
+        if (char.ageLived === 8) {
+            const chance = DATA.talentTiers.indexOf(char.talentTier) * 10;
+            if (KARNIT.roll(100) <= chance) {
+                addLog(`${char.ageLived}岁：元素亲和显现！你对${char.talentElement}元素的感知变得敏锐。`, 'break');
+                char.stats.MND += 1;
+            }
+        }
+
+        // 天赋测试（12岁）
+        if (char.ageLived === 12) {
+            addLog(`${char.ageLived}岁：天赋测试塔检测。测试官评价："${getTalentComment(char.talentTier)}"`, 'break');
+            showTalentTest();
+            return;
+        }
+
+        // 碎片饥饿
+        if (char.fragment && char.ageLived % 4 === 0) {
+            char.hunger += 5;
+            if (char.hunger >= 50) {
+                addLog(`源核饥饿度上升至${char.hunger}，梦境开始出现低语。`, 'event');
+            }
+        }
+
+        // 世界事件（每年暗骰）
+        if (KARNIT.roll(20) === 20) {
+            const event = KARNIT.pick(DATA.worldEvents);
+            GameState.world.events.push(event);
+            addLog(`世界事件：${event}`, 'event');
+            GameState.world.epochPulse += 1;
+        }
+    }
+
+    if (char.ageLived < 12) {
+        showChildhood();
+    } else if (char.ageLived < 16) {
+        showYouth();
+    } else {
+        showAdult();
+    }
+}
+
+function getTalentComment(tier) {
+    const comments = {
+        '凡品': '元素盲感',
+        '下品': '与某元素缔结了浅层契约',
+        '良品': '触摸到了元素真意边缘',
+        '上品': '窥见了法则之线的轮廓',
+        '极品': '触碰到了主干法则的支流',
+        '灵品': '引发测试塔轻微异象，需自行领悟',
+        '皇品': '测试塔光芒大作，评语含糊其辞',
+        '圣品': '法则支流奔涌，千年一遇',
+        '神品': '测试塔震颤，疑似神级天赋',
+        '道品': '法则主动共鸣，万古罕见',
+        '法则体': '测试塔法则崩解，无法评估'
+    };
+    return comments[tier] || '天赋平平';
+}
+
+function showTalentTest() {
+    const char = GameState.character;
+    const narrative = `
+        <div class="narrative">
+            <p>十二岁那年，你被带到了${char.region}的天赋测试塔前。高塔由黑曜石与秘银铸成，塔身刻满了古老的符文。</p>
+            <p>当测试水晶接触到你的手掌时，${char.talentTier === '凡品' ? '水晶只是微微发热，光芒黯淡' : char.talentTier === '下品' ? '水晶泛起单色微光' : char.talentTier === '良品' ? '光芒在水晶内部流动，如同活物' : char.talentTier === '上品' ? '光线在水晶中交织成脉络' : '水晶剧烈震颤，光芒几乎要冲破塔顶'}。</p>
+            <p>测试官深深看了你一眼，在羊皮纸上写下："${getTalentComment(char.talentTier)}。"</p>
+            <p>现在，你必须做出人生第一个重大选择。</p>
+        </div>
+    `;
+
+    const html = `
+        ${createParchment(narrative, KARNIT.generateCert()).outerHTML}
+        <div class="parchment">
+            <h3 style="color:var(--accent-bronze);margin-bottom:15px;">【少年期的选择】</h3>
+            <div class="choice-grid">
+                <div class="choice-btn" onclick="chooseClass('法师')">
+                    <span class="choice-title">前往法师高塔</span>
+                    <span class="choice-desc">以理性解析法则，代价是情感逐渐被逻辑取代。需要较高的灵识与学费。</span>
+                </div>
+                <div class="choice-btn" onclick="chooseClass('战士')">
+                    <span class="choice-title">加入武道馆</span>
+                    <span class="choice-desc">以肉身承载力量，代价是对痛苦的感知逐渐模糊。需要坚韧的体魄。</span>
+                </div>
+                <div class="choice-btn" onclick="chooseClass('影刃')">
+                    <span class="choice-title">追随影刃导师</span>
+                    <span class="choice-desc">潜伏于阴影之中，代价是自身存在逐渐被世界遗忘。需要敏锐的感知。</span>
+                </div>
+                <div class="choice-btn" onclick="chooseClass('匠魂')">
+                    <span class="choice-title">进入工匠行会</span>
+                    <span class="choice-desc">以解构万物为道，代价是失去欣赏整体之美的能力。需要精细的根骨。</span>
+                </div>
+                <div class="choice-btn" onclick="chooseClass('圣音')">
+                    <span class="choice-title">投身教会</span>
+                    <span class="choice-desc">借神力施展奇迹，代价是灵魂逐渐归属于信仰对象。需要坚定的魅力。</span>
+                </div>
+                <div class="choice-btn" onclick="chooseClass('未选择')">
+                    <span class="choice-title">独自游历</span>
+                    <span class="choice-desc">不依附任何势力，独自探索世界。更加自由，但也更加危险。</span>
+                </div>
+            </div>
+        </div>
+    `;
+    renderScreen(html);
+}
+
+function chooseClass(className) {
+    const char = GameState.character;
+    char.class = className;
+
+    if (className !== '未选择') {
+        const cls = DATA.classes[className];
+        Object.keys(cls.bonus).forEach(stat => {
+            char.stats[stat] += cls.bonus[stat];
+        });
+        addLog(`选择了${className}道路。${cls.desc}`, 'event');
+    } else {
+        addLog('选择独自游历，不依附任何势力。', 'event');
+    }
+
+    char.ageLived = 16;
+    GameState.phase = 'youth';
+    showYouth();
+}
+
+function showYouth() {
+    const char = GameState.character;
+    const narrative = `
+        <div class="narrative">
+            <p>十六岁的${char.name}站在人生的十字路口。${char.class !== '未选择' ? '你已踏上' + char.class + '之路，开始接触超凡的门槛。' : '你没有选择任何势力，独自在' + char.region + '的街头巷尾寻找机缘。'}</p>
+            <p>你的${char.talentElement}元素亲和开始真正显现。在冥想时，你能感受到空气中游离的${char.talentElement}元素如同萤火虫般围绕着你${char.talentTier === '凡品' ? '——虽然它们似乎并不愿意靠近' : char.talentTier === '极品' ? '——它们争先恐后地涌入你的经脉' : '——缓慢而稳定地回应着你的呼唤'}。</p>
+        </div>
+    `;
+
+    const html = `
+        ${createParchment(narrative, KARNIT.generateCert()).outerHTML}
+        <div class="parchment">
+            ${renderCompactPanel(char)}
+            <div class="divider"></div>
+            <h3 style="color:var(--accent-bronze);margin-bottom:15px;">【行动选择】</h3>
+            <div class="choice-grid">
+                <div class="choice-btn" onclick="doCultivation()">
+                    <span class="choice-title">修炼冥想</span>
+                    <span class="choice-desc">寻找灵脉节点，尝试凝聚第一条能量通道（炼脉境）。</span>
+                </div>
+                <div class="choice-btn" onclick="doCombat()">
+                    <span class="choice-title">实战历练</span>
+                    <span class="choice-desc">接受委托、猎杀魔兽、参与战斗，在生死间感悟法则。</span>
+                </div>
+                <div class="choice-btn" onclick="doTravel()">
+                    <span class="choice-title">游历探索</span>
+                    <span class="choice-desc">离开${char.region}，前往未知地域，寻找机缘与奇遇。</span>
+                </div>
+                <div class="choice-btn" onclick="doSocial()">
+                    <span class="choice-title">社交经营</span>
+                    <span class="choice-desc">建立人脉、加入势力、积累财富与声望。</span>
+                </div>
+                <div class="choice-btn" onclick="doBreakthrough()">
+                    <span class="choice-title">尝试突破</span>
+                    <span class="choice-desc">当积累足够时，冲击境界壁垒。风险与收益并存。</span>
+                </div>
+                <div class="choice-btn" onclick="advanceAge(1)">
+                    <span class="choice-title">快进一年</span>
+                    <span class="choice-desc">让时间自然流逝，结算年度事件与成长。</span>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div style="text-align:center;">
+                <button class="btn btn-secondary" onclick="showFullPanel()">完整面板</button>
+                <button class="btn btn-secondary" onclick="showLog()">事件日志</button>
+                <button class="btn btn-void" onclick="GameState.save()">保存游戏</button>
+            </div>
+        </div>
+    `;
+    renderScreen(html);
+}
+
+function showAdult() {
+    showYouth(); // 成年期与青年期共用界面，但事件不同
+}
+
+function advanceAge(years) {
+    const char = GameState.character;
+
+    for (let i = 0; i < years; i++) {
+        char.ageLived++;
+        GameState.turn++;
+
+        const seasons = ['春','夏','秋','冬'];
+        GameState.world.season = seasons[GameState.turn % 4];
+        if (GameState.turn % 4 === 0) GameState.world.year++;
+
+        // 寿元检查
+        const maxAge = char.baseLifespan + char.realmBonus;
+        if (char.ageLived >= maxAge) {
+            showEnding('寿终正寝');
+            return;
+        }
+
+        // 碎片饥饿
+        if (char.fragment && GameState.turn % 4 === 0) {
+            char.hunger += (GameState.config.difficulty === 'III' ? 10 : 5);
+            if (char.hunger >= 100) {
+                showEnding('源核同化');
+                return;
+            }
+        }
+
+        // 职业侵蚀
+        if (char.class !== '未选择') {
+            const costTypes = { '法师': '认知污染', '战士': '痛觉钝化', '影刃': '存在稀释', '匠魂': '知识诅咒', '圣音': '信仰债务' };
+            if (KARNIT.roll(100) <= 20) {
+                char.classCost += KARNIT.rollRange(1, 5);
+                if (char.classCost >= 100) {
+                    showEnding('法则同化');
+                    return;
+                }
+            }
+        }
+
+        // 世界事件
+        if (KARNIT.roll(20) === 20) {
+            const event = KARNIT.pick(DATA.worldEvents);
+            GameState.world.events.push(event);
+            addLog(`世界事件：${event}`, 'event');
+            GameState.world.epochPulse += 1;
+        }
+
+        // 自然衰老（50岁后）
+        if (char.ageLived > 50 && char.realm < 4) {
+            if (KARNIT.roll(100) <= 10) {
+                char.stats.VIG -= 1;
+                addLog(`${char.ageLived}岁：岁月侵蚀，体魄下降。`, 'event');
+            }
+        }
+
+        // 随机遭遇
+        if (KARNIT.roll(100) <= 30) {
+            const locations = ['城市街道','荒野平原','深山老林','上古遗迹'];
+            const loc = KARNIT.pick(locations);
+            const encTable = DATA.encounters[loc];
+            const enc = weightedPick(encTable, 'weight');
+            if (enc.type !== '无事') {
+                addLog(`遭遇：在${loc}遇到${enc.desc}。`, 'combat');
+            }
+        }
+    }
+
+    addLog(`度过了${years}年，现在${char.ageLived}岁。`, 'normal');
+    showYouth();
+}
+
+// ==================== 修炼系统 ====================
+
+function doCultivation() {
+    const char = GameState.character;
+    const realm = DATA.realms[char.realm];
+
+    if (char.realm === 0) {
+        // 尝试踏入炼脉
+        const success = KARNIT.roll(100) <= (95 + char.breakBonus);
+        if (success) {
+            char.realm = 1;
+            char.level = 1;
+            char.realmBonus += 50;
+            char.stats.MND += 1;
+            char.stats.CON += 1;
+            addLog('成功凝聚第一条能量通道，踏入炼脉境！寿元增加50年。', 'break');
+            showModal('突破成功', `
+                <p>你盘坐于${char.region}的一处灵脉节点之上，感受着体内第一条能量通道的成形。</p>
+                <p class="quote">魔力如涓涓细流，在经脉中缓缓流淌。你终于踏入了超凡的门槛。</p>
+            `, [{ text: '继续', onclick: 'closeModal();showYouth()', class: 'btn' }]);
+        } else {
+            char.accumulation += 10;
+            addLog('冥想感悟，积累增加，但尚未触及炼脉门槛。', 'normal');
+            showModal('修炼感悟', `
+                <p>你尝试感应天地间的魔力，但经脉如同堵塞的河道，魔力只能在局部流转。</p>
+                <p class="quote">积累深度：${char.accumulation}%</p>
+            `, [{ text: '继续', onclick: 'closeModal();showYouth()', class: 'btn' }]);
+        }
+    } else {
+        // 正常修炼
+        const gain = KARNIT.rollRange(5, 15) * (char.cultivationSpeed / 100);
+        char.accumulation += gain;
+
+        // 感悟
+        if (KARNIT.roll(100) <= char.stats.MND * 3) {
+            char.insight += KARNIT.rollRange(1, 5);
+        }
+
+        // 肉身承载
+        if (KARNIT.roll(100) <= char.stats.CON * 3) {
+            char.vessel += KARNIT.rollRange(1, 3);
+        }
+
+        addLog(`修炼结束。积累+${gain.toFixed(1)}%，当前积累${char.accumulation.toFixed(1)}%。`, 'normal');
+        showModal('修炼结束', `
+            <p>你在${char.region}的灵脉旁冥想了一季。</p>
+            <p>积累深度：${char.accumulation.toFixed(1)}%</p>
+            <p>法则感悟：${char.insight}</p>
+            <p>肉身承载：${char.vessel}</p>
+        `, [{ text: '继续', onclick: 'closeModal();showYouth()', class: 'btn' }]);
+    }
+}
+
+function doBreakthrough() {
+    const char = GameState.character;
+    const currentRealm = DATA.realms[char.realm];
+    const nextRealm = DATA.realms[char.realm + 1];
+
+    if (!nextRealm) {
+        showModal('已达巅峰', '<p>你已站在当前道路的尽头，前方已无明确的路标。</p>', [{ text: '返回', onclick: 'closeModal()', class: 'btn-secondary' }]);
+        return;
+    }
+
+    // 检查条件
+    const checks = [];
+    if (char.accumulation < 100) checks.push('积累不足');
+    if (char.insight < char.realm * 10) checks.push('感悟不足');
+    if (char.vessel < char.realm * 8) checks.push('承载不足');
+    if (char.mindstate < 30) checks.push('心境不稳');
+
+    if (checks.length > 0) {
+        showModal('突破准备', `
+            <p>你感受到境界壁垒的存在，但以下隐患阻碍着你：</p>
+            <ul>${checks.map(c => `<li>${c}</li>`).join('')}</ul>
+            <p class="quote">强行突破将大幅降低成功率，并可能遭受严重反噬。</p>
+        `, [
+            { text: '强行突破', onclick: 'closeModal();attemptBreakthrough(true)', class: 'btn-danger' },
+            { text: '继续准备', onclick: 'closeModal()', class: 'btn-secondary' }
+        ]);
+    } else {
+        showModal('突破准备', `
+            <p>你的积累已满溢，法则感悟清晰，肉身与心境都已准备就绪。</p>
+            <p class="quote">突破${nextRealm.name}境的基础成功率：${nextRealm.breakRate}%</p>
+        `, [
+            { text: '开始突破', onclick: 'closeModal();attemptBreakthrough(false)', class: 'btn' },
+            { text: '再等等', onclick: 'closeModal()', class: 'btn-secondary' }
+        ]);
+    }
+}
+
+function attemptBreakthrough(forced) {
+    const char = GameState.character;
+    const nextRealm = DATA.realms[char.realm + 1];
+    if (!nextRealm) return;
+
+    let successRate = nextRealm.breakRate + char.breakBonus;
+    if (forced) successRate = Math.floor(successRate / 2);
+
+    const roll = KARNIT.roll(100);
+    const success = roll <= successRate;
+
+    if (success) {
+        char.realm += 1;
+        char.level = 1;
+        char.realmBonus += nextRealm.lifeBonus;
+        char.accumulation = 0;
+        char.insight += KARNIT.rollRange(5, 15);
+        char.vessel += KARNIT.rollRange(3, 10);
+        char.mindstate += KARNIT.rollRange(5, 10);
+
+        // 属性提升
+        const stats = ['VIG','PER','MND','CHA','CON','LUC'];
+        const boost = KARNIT.pick(stats);
+        char.stats[boost] += 1;
+
+        addLog(`突破成功！踏入${nextRealm.name}境！${nextRealm.mark}`, 'break');
+
+        let desc = `<p>魔力如决堤洪水般冲击着境界壁垒，在一阵剧痛与狂喜交织中，你感到某种桎梏被打破。</p>`;
+        if (roll <= 5) {
+            desc += `<p class="quote">完美突破！额外领悟了${char.talentElement}法则的深层奥秘。</p>`;
+            char.cultivationSpeed += 10;
+        }
+        desc += `<p>寿元增加${nextRealm.lifeBonus}年，当前总寿元：${char.baseLifespan + char.realmBonus}年。</p>`;
+
+        showModal('突破成功', desc, [{ text: '继续', onclick: 'closeModal();showYouth()', class: 'btn' }]);
+    } else {
+        const loss = forced ? KARNIT.rollRange(30, 50) : KARNIT.rollRange(10, 30);
+        char.accumulation -= loss;
+        if (char.accumulation < 0) char.accumulation = 0;
+
+        let desc = `<p>魔力在冲击壁垒时反噬，经脉剧痛，一口鲜血喷出。</p>`;
+
+        if (roll > successRate + 30) {
+            char.healthStatus = '经脉损伤';
+            desc += `<p class="quote">严重失败！经脉受损，修炼速度下降，需史诗级药材修复。</p>`;
+            char.cultivationSpeed -= 10;
+        } else {
+            desc += `<p>突破中止，积累损失${loss}%。</p>`;
+        }
+
+        addLog(`突破失败！积累损失${loss}%。${char.healthStatus === '经脉损伤' ? '经脉受损！' : ''}`, 'combat');
+        showModal('突破失败', desc, [{ text: '继续', onclick: 'closeModal();showYouth()', class: 'btn' }]);
+    }
+}
+
+// ==================== 战斗系统 ====================
+
+function doCombat() {
+    const char = GameState.character;
+
+    // 生成敌人
+    const enemyRealm = Math.max(0, char.realm + KARNIT.rollRange(-2, 3));
+    const enemyLevel = KARNIT.rollRange(1, 5);
+    const enemyClass = KARNIT.pick(['法师','战士','影刃','魔兽']);
+    const enemyName = generateEnemyName(enemyClass);
+
+    const enemy = {
+        name: enemyName,
+        realm: enemyRealm,
+        level: enemyLevel,
+        class: enemyClass,
+        hp: 100,
+        maxHp: 100
+    };
+
+    GameState.combat = {
+        playerHp: 100,
+        playerMaxHp: 100,
+        enemy: enemy,
+        round: 0,
+        log: []
+    };
+
+    showCombatScreen();
+}
+
+function generateEnemyName(cls) {
+    const prefixes = ['狂暴','暗影','腐化','嗜血','冰霜','烈焰'];
+    const suffixes = {
+        '法师': ['术士','巫师','元素使','咒法师'],
+        '战士': ['剑士','狂战士','骑士','佣兵'],
+        '影刃': ['刺客','潜行者','暗影','毒刃'],
+        '魔兽': ['狼','熊','蟒','鹰','蛛','蝎']
+    };
+    if (cls === '魔兽') {
+        return KARNIT.pick(prefixes) + KARNIT.pick(suffixes[cls]);
+    }
+    return KARNIT.pick(prefixes) + '·' + KARNIT.pick(suffixes[cls]);
+}
+
+function showCombatScreen() {
+    const char = GameState.character;
+    const combat = GameState.combat;
+    const enemy = combat.enemy;
+
+    const realmDiff = enemy.realm - char.realm;
+    const playerHpPct = (combat.playerHp / combat.playerMaxHp) * 100;
+    const enemyHpPct = (enemy.hp / enemy.maxHp) * 100;
+
+    let warning = '';
+    if (realmDiff >= 3) {
+        warning = '<p class="crimson-text" style="text-align:center;font-weight:bold;">警告：敌人境界远高于你！灵魂压制生效！</p>';
+    } else if (realmDiff >= 2) {
+        warning = '<p class="crimson-text" style="text-align:center;">敌人高你两个大境界，攻击可能无效化！</p>';
+    } else if (realmDiff >= 1) {
+        warning = '<p style="text-align:center;color:var(--accent-bronze);">敌人高你一个大境界，位阶压制生效。</p>';
+    }
+
+    const html = `
+        <div class="parchment">
+            <div class="title-block">
+                <h1>战斗遭遇</h1>
+                <div class="subtitle">${char.location || char.region} · 回合 ${combat.round + 1}</div>
+            </div>
+            ${warning}
+            <div class="combat-arena">
+                <div class="combatants">
+                    <div class="combatant">
+                        <div class="combatant-name">${char.name}</div>
+                        <div class="hp-bar">
+                            <div class="hp-fill ${playerHpPct < 30 ? 'danger' : playerHpPct < 60 ? 'warning' : ''}" style="width:${playerHpPct}%"></div>
+                            <div class="hp-text">${combat.playerHp}/${combat.playerMaxHp}</div>
+                        </div>
+                        <div style="font-size:0.8em;color:var(--ink-light);margin-top:5px;">
+                            ${DATA.realms[char.realm].name} Lv.${char.level} · ${char.class}
+                        </div>
+                    </div>
+                    <div class="vs-mark">VS</div>
+                    <div class="combatant">
+                        <div class="combatant-name">${enemy.name}</div>
+                        <div class="hp-bar">
+                            <div class="hp-fill ${enemyHpPct < 30 ? 'danger' : enemyHpPct < 60 ? 'warning' : ''}" style="width:${enemyHpPct}%"></div>
+                            <div class="hp-text">${enemy.hp}/${enemy.maxHp}</div>
+                        </div>
+                        <div style="font-size:0.8em;color:var(--ink-light);margin-top:5px;">
+                            ${DATA.realms[enemy.realm].name} Lv.${enemy.level} · ${enemy.class}
+                        </div>
+                    </div>
+                </div>
+                ${combat.log.length > 0 ? `<div class="combat-log">${combat.log[combat.log.length - 1]}</div>` : ''}
+            </div>
+            <div class="choice-grid">
+                <div class="choice-btn" onclick="combatAction('attack')">
+                    <span class="choice-title">全力攻击</span>
+                    <span class="choice-desc">发动最强攻势，但可能暴露破绽。</span>
+                </div>
+                <div class="choice-btn" onclick="combatAction('defend')">
+                    <span class="choice-title">谨慎防守</span>
+                    <span class="choice-desc">以守为攻，减少受到的伤害，寻找反击机会。</span>
+                </div>
+                <div class="choice-btn" onclick="combatAction('skill')">
+                    <span class="choice-title">施展法术/战技</span>
+                    <span class="choice-desc">消耗大量魔力/体力，但威力巨大。</span>
+                </div>
+                <div class="choice-btn" onclick="combatAction('flee')">
+                    <span class="choice-title">尝试逃跑</span>
+                    <span class="choice-desc">保全性命优先，但可能失败并遭受追击。</span>
+                </div>
+            </div>
+        </div>
+    `;
+    renderScreen(html);
+}
+
+function combatAction(action) {
+    const char = GameState.character;
+    const combat = GameState.combat;
+    const enemy = combat.enemy;
+
+    combat.round++;
+
+    const realmDiff = enemy.realm - char.realm;
+
+    if (realmDiff >= 3) {
+        // 灵魂压制，无法战斗
+        combat.playerHp = 0;
+        combat.log.push('敌人的威压如山岳般沉重，你甚至连战斗的意志都无法凝聚...');
+        showCombatScreen();
+        setTimeout(() => showEnding('战斗死亡'), 1500);
+        return;
+    }
+
+    let playerDmg = 0, enemyDmg = 0;
+    let playerRoll = KARNIT.roll(100) + char.stats.VIG + char.stats.MND;
+    let enemyRoll = KARNIT.roll(100) + enemy.realm * 10 + enemy.level * 3;
+
+    // 境界压制
+    if (realmDiff >= 1) {
+        playerRoll -= realmDiff * 30;
+    }
+    if (char.realm > enemy.realm) {
+        enemyRoll -= (char.realm - enemy.realm) * 20;
+    }
+
+    switch(action) {
+        case 'attack':
+            playerDmg = Math.max(5, Math.floor((playerRoll - enemyRoll + 50) / 5));
+            enemyDmg = Math.max(5, Math.floor((enemyRoll - playerRoll + 30) / 5));
+            combat.log.push(`你发起猛攻，${playerDmg > 20 ? '重创' : playerDmg > 10 ? '击伤' : '擦伤'}了${enemy.name}！`);
+            break;
+        case 'defend':
+            playerDmg = Math.max(0, Math.floor((playerRoll - enemyRoll + 30) / 8));
+            enemyDmg = Math.max(0, Math.floor((enemyRoll - playerRoll + 10) / 8));
+            combat.log.push(`你稳固防守，${enemyDmg === 0 ? '完全格挡了敌人的攻击！' : '只受了轻伤。'}`);
+            break;
+        case 'skill':
+            playerDmg = Math.max(10, Math.floor((playerRoll - enemyRoll + 80) / 4));
+            enemyDmg = Math.max(5, Math.floor((enemyRoll - playerRoll + 40) / 5));
+            combat.log.push(`你施展${char.talentElement}系绝技，${playerDmg > 30 ? '差点一击毙敌！' : '造成了可观的伤害。'}`);
+            break;
+        case 'flee':
+            const fleeChance = 50 + (char.stats.PER - enemy.realm * 5);
+            if (KARNIT.roll(100) <= fleeChance) {
+                addLog(`成功从${enemy.name}手中逃脱！`, 'event');
+                showYouth();
+                return;
+            } else {
+                enemyDmg = Math.max(10, Math.floor((enemyRoll - playerRoll + 50) / 4));
+                combat.log.push('逃跑失败！敌人追上你并发动了致命一击！');
+            }
+            break;
+    }
+
+    // 碎片特权
+    if (char.fragment && KARNIT.roll(100) <= 20) {
+        playerDmg = Math.floor(playerDmg * 1.5);
+        combat.log[combat.log.length - 1] += ' [源核碎片共鸣增强]';
+    }
+
+    enemy.hp -= playerDmg;
+    combat.playerHp -= enemyDmg;
+
+    if (enemy.hp <= 0) {
+        enemy.hp = 0;
+        const rewards = generateCombatRewards(enemy);
+        addLog(`击败${enemy.name}！获得${rewards.desc}。`, 'combat');
+
+        // 积累与感悟
+        char.accumulation += KARNIT.rollRange(10, 20);
+        char.insight += KARNIT.rollRange(1, 5);
+        char.vessel += KARNIT.rollRange(1, 3);
+
+        showModal('战斗胜利', `
+            <p>${enemy.name}倒在了你的脚下。</p>
+            <p>获得：${rewards.desc}</p>
+            <p>积累+${KARNIT.rollRange(10,20)}%，感悟+${KARNIT.rollRange(1,5)}</p>
+        `, [{ text: '继续', onclick: 'closeModal();showYouth()', class: 'btn' }]);
+        return;
+    }
+
+    if (combat.playerHp <= 0) {
+        combat.playerHp = 0;
+        showCombatScreen();
+        setTimeout(() => {
+            if (char.fragment && KARNIT.roll(100) <= 30) {
+                showModal('濒死挣扎', '<p>源核碎片在生死关头爆发出惊人的力量，你勉强保住了性命！</p>', [
+                    { text: '继续', onclick: 'closeModal();char.healthStatus="重伤";showYouth()', class: 'btn' }
+                ]);
+            } else {
+                showEnding('战斗死亡');
+            }
+        }, 1000);
+        return;
+    }
+
+    showCombatScreen();
+}
+
+function generateCombatRewards(enemy) {
+    const qualityRoll = KARNIT.roll(100);
+    let quality = '普通';
+    let desc = '一些铜币和材料';
+
+    if (qualityRoll >= 95) {
+        quality = '史诗';
+        desc = '星辰铁碎片/高阶法则结晶';
+    } else if (qualityRoll >= 85) {
+        quality = '稀有';
+        desc = '秘银矿石/中级魔兽魔核';
+    } else if (qualityRoll >= 60) {
+        quality = '普通';
+        desc = '精铁装备/常见药材';
+    }
+
+    const gold = KARNIT.rollRange(1, 10) * (enemy.realm + 1);
+    GameState.character.money.gold += gold;
+
+    return { quality, desc: desc + `, ${gold}金币` };
+}
+
+// ==================== 旅行与社交 ====================
+
+function doTravel() {
+    const char = GameState.character;
+    const destinations = [
+        '东舟大陆·大楚帝国', '卡德利亚大陆·银月精灵之森', '卡尼亚大陆·南荒帝国',
+        '圣庭洲·神圣教廷', '商贸群岛·碧波核心', '亡者之屿·暗夜王国'
+    ].filter(d => !d.includes(char.continent));
+
+    const dest = KARNIT.pick(destinations);
+    const cost = KARNIT.rollRange(50, 200);
+
+    if (char.money.gold < cost && char.money.purple < Math.ceil(cost/100)) {
+        showModal('资金不足', `<p>前往${dest}需要${cost}金币，你的资金不足。</p>`, [
+            { text: '返回', onclick: 'closeModal()', class: 'btn-secondary' }
+        ]);
+        return;
+    }
+
+    char.money.gold -= cost;
+    char.location = dest;
+
+    // 遭遇
+    const encRoll = KARNIT.roll(100);
+    let encText = '';
+    if (encRoll <= 20) {
+        encText = '旅途平安无事，你顺利抵达目的地。';
+    } else if (encRoll <= 50) {
+        encText = '途中遭遇低级魔兽袭击，但你轻松解决了它们。';
+        char.accumulation += 5;
+    } else if (encRoll <= 80) {
+        encText = '遇到了一支商队，获得了有价值的情报。';
+        char.insight += 3;
+    } else {
+        encText = '遭遇空间乱流/高阶海魔兽，险些丧命！';
+        char.healthStatus = '轻伤';
+    }
+
+    addLog(`旅行至${dest}。${encText}`, 'event');
+    showModal('旅行结束', `<p>${encText}</p><p>花费：${cost}金币</p>`, [
+        { text: '继续', onclick: 'closeModal();showYouth()', class: 'btn' }
+    ]);
+}
+
+function doSocial() {
+    const char = GameState.character;
+    const npc = KARNIT.pick(DATA.npcPool);
+
+    const attitudes = ['冷漠','好奇','友善','贪婪','敌意'];
+    const attitude = KARNIT.pick(attitudes);
+
+    char.contacts.push({
+        name: npc.name,
+        realm: npc.realm,
+        class: npc.class,
+        attitude: attitude,
+        relation: 0
+    });
+
+    addLog(`结识了${npc.name}（${DATA.realms[npc.realm].name}·${npc.class}），对方态度：${attitude}。`, 'event');
+
+    showModal('社交事件', `
+        <p>你在${char.region}的酒馆/集市/高塔中遇到了<span class="gold-text">${npc.name}</span>。</p>
+        <p>对方是${DATA.realms[npc.realm].name}境的${npc.class}，对你的态度似乎${attitude === '友善' ? '颇为友善' : attitude === '敌意' ? '带着敌意' : '颇为平淡'}。</p>
+        <p class="quote">"${generateNPCDialogue(npc, attitude)}"</p>
+    `, [{ text: '继续', onclick: 'closeModal();showYouth()', class: 'btn' }]);
+}
+
+function generateNPCDialogue(npc, attitude) {
+    const dialogues = {
+        '冷漠': ['卡尼特不缺少天才，缺的是活下来的天才。','别挡路。','有事快说。'],
+        '好奇': ['你的气息...有些不同寻常。','听说过你的传闻，今日一见果然不凡。','有兴趣做个交易吗？'],
+        '友善': ['年轻人，我可以教你一些东西。','如果需要帮助，可以来找我。','你的天赋不应该被浪费。'],
+        '贪婪': ['我对你身上的某样东西很感兴趣...','听说你最近发了笔横财？','合作如何？利润三七分。'],
+        '敌意': ['你杀了我的弟子/朋友！','滚出我的视线。','下次见面，就是死斗。']
+    };
+    return KARNIT.pick(dialogues[attitude] || dialogues['冷漠']);
+}
+
+function showLog() {
+    const logHtml = GameState.log.slice(-20).map(entry => {
+        const typeClass = entry.type === 'combat' ? 'log-combat' : entry.type === 'break' ? 'log-break' : entry.type === 'event' ? 'log-event' : entry.type === 'death' ? 'log-death' : 'log-text';
+        return `<div class="log-entry"><span class="log-time">${entry.time}</span> <span class="${typeClass}">${entry.text}</span></div>`;
+    }).join('');
+
+    showModal('事件日志', `<div class="log-container">${logHtml || '<p>暂无记录。</p>'}</div>`, [
+        { text: '关闭', onclick: 'closeModal()', class: 'btn-secondary' }
+    ]);
+}
+
+// ==================== 终局系统 ====================
+
+function showEnding(type) {
+    GameState.phase = 'ending';
+    const char = GameState.character;
+
+    const endings = {
+        '寿终正寝': {
+            title: '寿终正寝',
+            desc: '时间是最公平的法则。你的寿元池终于枯竭，在${char.region}的某个宁静夜晚，你闭上了双眼。',
+            color: '#5c4d3a'
+        },
+        '战斗死亡': {
+            title: '战死沙场',
+            desc: '你的最后一战轰轰烈烈。敌人倒下时，你也倒在了血泊中。卡尼特记得勇者的名字。',
+            color: '#8b0000'
+        },
+        '源核同化': {
+            title: '源核同化',
+            desc: '饥饿度达到极限，源核碎片彻底吞噬了你的意识。你成为了法则的一部分，一个行走的法则傀儡。',
+            color: '#1a0f2e'
+        },
+        '法则同化': {
+            title: '法则同化',
+            desc: '职业侵蚀达到极限，你失去了自由意志，化为${char.class === '法师' ? '人形法则编译器' : char.class === '战士' ? '战斗本能的化身' : char.class === '影刃' ? '因果层面的幽灵' : '纯粹的知识容器'}。',
+            color: '#4a3f35'
+        }
+    };
+
+    const ending = endings[type] || endings['寿终正寝'];
+
+    // 计算传说值
+    const legend = Math.floor(char.realm * 10 + char.accumulation / 10 + char.contacts.length * 5);
+
+    const html = `
+        <div class="parchment ending-screen">
+            <h2 style="color:${ending.color}">${ending.title}</h2>
+            <div class="divider"></div>
+            <div class="narrative" style="text-align:center;text-indent:0;">
+                <p>${ending.desc}</p>
+                <p class="quote">${char.name} · ${char.race} · ${char.ageLived}岁 · ${DATA.realms[char.realm].name}境</p>
+            </div>
+            <div class="divider"></div>
+            <h3 style="color:var(--accent-bronze);margin-bottom:15px;">【一生回顾】</h3>
+            <div class="legacy-stats">
+                <div class="legacy-item">
+                    <div class="number">${char.ageLived}</div>
+                    <div class="label">享年</div>
+                </div>
+                <div class="legacy-item">
+                    <div class="number">${DATA.realms[char.realm].name}</div>
+                    <div class="label">最高境界</div>
+                </div>
+                <div class="legacy-item">
+                    <div class="number">${legend}</div>
+                    <div class="label">传说值</div>
+                </div>
+                <div class="legacy-item">
+                    <div class="number">${char.contacts.length}</div>
+                    <div class="label">结识人数</div>
+                </div>
+                <div class="legacy-item">
+                    <div class="number">${GameState.turn}</div>
+                    <div class="label">经历回合</div>
+                </div>
+                <div class="legacy-item">
+                    <div class="number">${char.money.purple}</div>
+                    <div class="label">遗留紫金币</div>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div style="margin-top:20px;">
+                <button class="btn" onclick="showStartup()">返回主菜单</button>
+                <button class="btn btn-secondary" onclick="startGame()">重新开始</button>
+                <button class="btn btn-danger" onclick="clearAndRestart()">清除存档</button>
+            </div>
+        </div>
+    `;
+    renderScreen(html);
+}
+
+function clearAndRestart() {
+    GameState.clearSave();
+    showStartup();
+}
+
+// ==================== 存档系统 ====================
+
+function loadGame() {
+    if (GameState.load()) {
+        addLog('存档读取成功。', 'event');
+        if (GameState.phase === 'startup') showStartup();
+        else if (GameState.phase === 'birth') showBirthNarrative();
+        else if (GameState.phase === 'ending') showEnding('寿终正寝');
+        else showYouth();
+    } else {
+        showModal('读取失败', '<p>没有找到本地存档。</p>', [
+            { text: '确定', onclick: 'closeModal()', class: 'btn-secondary' }
+        ]);
+    }
+}
+
+// ==================== 启动 ====================
+
+window.onload = function() {
+    if (GameState.load()) {
+        showModal('发现存档', '<p>检测到你之前的人生记录，是否继续？</p>', [
+            { text: '继续人生', onclick: 'closeModal();if(GameState.phase==="ending")showStartup();else showYouth()', class: 'btn' },
+            { text: '新的开始', onclick: 'closeModal();GameState.clearSave();showStartup()', class: 'btn-secondary' }
+        ]);
+    } else {
+        showStartup();
+    }
+};
+</script>
+</body>
+</html>
